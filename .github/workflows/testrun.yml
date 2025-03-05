@@ -9,7 +9,8 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on:
+      - codebuild-test-runner-${{ github.run_id }}-${{ github.run_attempt }}
 
     services:
       zookeeper:
