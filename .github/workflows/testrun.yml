@@ -21,32 +21,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install dependencies
-        run: npm i
-      - name: Setup DynamoDB Local
-        uses: rrainn/dynamodb-action@v2.0.0
-        with:
-          dbPath: # undefined by default, if this is undefined inMemory will be used
-          sharedDb: # undefined by default
-          delayTransientStatuses: # undefined by default
-          optimizeDbBeforeStartup: # undefined by default
-          port: 8000
-          cors: '*'
       - name: Printing directory
         run: ls -la
+      - name: Install dependencies
+        run: npm i
       #      - run: npm run build --if-present
       - run: npm run test
-        env:
-          AWS_REGION: us-east-1
-          LOCAL_DYNAMO: "true"
-          DYNAMO_ENDPOINT: "http://localhost:8000"
-          DATABASE_HOST: 0.0.0.0
-          DATABASE_PORT: 5432
-          DATABASE_NAME: postgres_db
-          DATABASE_USER: postgres_user
-          DATABASE_PASSWORD: postgres_password
-          REDIS_HOST: 0.0.0.0
-          REDIS_PORT: 6379
-          BOOTSTRAP_SERVER: localhost:9092
-
 
