@@ -1,0 +1,101 @@
+name: Test Runner
+
+on:
+  push:
+    branches: [ main, development ]
+  pull_request:
+    branches: [ main, development ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    services:
+      zookeeper:
+        image: confluentinc/cp-zookeeper:latest
+        env:
+          ZOOKEEPER_CLIENT_PORT: 2181
+          ZOOKEEPER_TICK_TIME: 2000
+          ALLOW_ANONYMOUS_LOGIN: yes
+        ports:
+          - 22181:2181
+      #        options: >-
+      #          --health-cmd "echo mntr | nc -w 2 -q 2 zookeeper 2181"
+      #          --health-interval 10s
+      #          --health-timeout 5s
+      #          --health-retries 5
+      kafka:
+        image: confluentinc/cp-kafka:latest
+        ports:
+          - 9092:9092
+        #        options: >-
+        #          --health-cmd "kafka-broker-api-versions.sh --version"
+        #          --health-interval 10s
+        #          --health-timeout 5s
+        #          --health-retries 5
+        env:
+          KAFKA_BROKER_ID: 1
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9093,PLAINTEXT_HOST://localhost:9092
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+          KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          ALLOW_PLAINTEXT_LISTENER: yes
+      # label used to access the services container
+#      dynamodb-local:
+#        image: "amazon/dynamodb-local:latest"
+#        ports:
+#          - "8000:8000"
+##        volumes:
+##          - "./docker/dynamodb:/home/dynamodblocal/data"
+##        working_dir: /home/dynamodblocal
+      redis:
+        # Docker Hub image
+        image: redis
+        ports:
+          # maps tcp port 5432 on services container to the host
+          - 6379:6379
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        run: npm i
+      - name: Setup DynamoDB Local
+        uses: rrainn/dynamodb-action@v2.0.0
+        with:
+          dbPath: # undefined by default, if this is undefined inMemory will be used
+          sharedDb: # undefined by default
+          delayTransientStatuses: # undefined by default
+          optimizeDbBeforeStartup: # undefined by default
+          port: 8000
+          cors: '*'
+      #      - run: npm run build --if-present
+      - run: npm run test
+        env:
+          AWS_REGION: us-east-1
+          LOCAL_DYNAMO: "true"
+          DYNAMO_ENDPOINT: "http://localhost:8000"
+          DATABASE_HOST: 0.0.0.0
+          DATABASE_PORT: 5432
+          DATABASE_NAME: postgres_db
+          DATABASE_USER: postgres_user
+          DATABASE_PASSWORD: postgres_password
+          REDIS_HOST: 0.0.0.0
+          REDIS_PORT: 6379
+          BOOTSTRAP_SERVER: localhost:9092
+
+
