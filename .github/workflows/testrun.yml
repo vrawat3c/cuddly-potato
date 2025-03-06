@@ -26,6 +26,8 @@ jobs:
       - name: Print Directory
         run: ls -la
       #      - run: npm run build --if-present
+      - name: Public IP
+        run: curl ifconfig.me
       - run: npm run test
         env:
           AWS_REGION: us-east-1
