@@ -9,8 +9,8 @@ on:
 jobs:
   build:
 
-    runs-on:
-      - codebuild-test-runner-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: self-hosted
+      # - codebuild-test-runner-${{ github.run_id }}-${{ github.run_attempt }}
 
     strategy:
       matrix:
@@ -31,6 +31,7 @@ jobs:
       - run: npm run test
         env:
           AWS_REGION: us-east-1
+          
           LOCAL_DYNAMO: "true"
           DYNAMO_ENDPOINT: "http://localhost:8000"
           DATABASE_HOST: 0.0.0.0
